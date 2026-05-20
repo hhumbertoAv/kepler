@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net"
 	"os"
 	"syscall"
 	"time"
@@ -203,19 +202,6 @@ func createServices(logger *slog.Logger, cfg *config.Config) ([]service.Service,
 	} else {
 		logger.Info("Conntrack reader enabled", "nat_entries", len(ctReader.NATEntries()))
 		pmOpts = append(pmOpts, monitor.WithConntrackReader(ctReader))
-	}
-
-	// Pod CIDRs for NIC flow attribution scoping. Defaults to common Kubernetes
-	// pod networks (Flannel/Calico/Kind default).
-	podCIDRStrings := []string{"10.244.0.0/16", "10.42.0.0/16", "192.168.0.0/16"}
-	var podCIDRs []*net.IPNet
-	for _, s := range podCIDRStrings {
-		if _, cidr, err := net.ParseCIDR(s); err == nil {
-			podCIDRs = append(podCIDRs, cidr)
-		}
-	}
-	if len(podCIDRs) > 0 {
-		pmOpts = append(pmOpts, monitor.WithPodCIDRs(podCIDRs))
 	}
 
 	// Pod IP resolver — enriches per-pod NIC metrics with pod_name/pod_namespace

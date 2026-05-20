@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -46,7 +45,6 @@ type PowerMonitor struct {
 	gpuMeters        []gpu.GPUPowerMeter       // optional, empty if no GPUs available
 	nicMeter         network.NICPowerMeter      // optional, nil if no NIC energy available
 	conntrackReader  *network.ConntrackReader   // optional, nil if conntrack unavailable
-	podCIDRs         []*net.IPNet               // pod networks for flow attribution scoping
 
 	interval time.Duration
 	clock    clock.WithTicker
@@ -106,7 +104,6 @@ func NewPowerMonitor(meter device.CPUPowerMeter, applyOpts ...OptionFn) *PowerMo
 		gpuMeters:       opts.gpuMeters,
 		nicMeter:        opts.nicPowerMeter,
 		conntrackReader: opts.conntrackReader,
-		podCIDRs:        opts.podCIDRs,
 		clock:     opts.clock,
 		interval:  opts.interval,
 		resources: opts.resources,

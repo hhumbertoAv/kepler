@@ -5,7 +5,6 @@ package monitor
 
 import (
 	"log/slog"
-	"net"
 	"time"
 
 	"github.com/sustainable-computing-io/kepler/internal/device/gpu"
@@ -22,7 +21,6 @@ type Opts struct {
 	gpuMeters                    []gpu.GPUPowerMeter
 	nicPowerMeter                network.NICPowerMeter
 	conntrackReader              *network.ConntrackReader
-	podCIDRs                     []*net.IPNet
 	maxStaleness                 time.Duration
 	maxTerminated                int
 	minTerminatedEnergyThreshold Energy
@@ -112,14 +110,5 @@ func WithNICPowerMeter(meter network.NICPowerMeter) OptionFn {
 func WithConntrackReader(reader *network.ConntrackReader) OptionFn {
 	return func(o *Opts) {
 		o.conntrackReader = reader
-	}
-}
-
-// WithPodCIDRs restricts NIC flow attribution to pods within the given
-// CIDRs. Flows outside these ranges are skipped unless conntrack on this
-// node can resolve them to a local pod.
-func WithPodCIDRs(cidrs []*net.IPNet) OptionFn {
-	return func(o *Opts) {
-		o.podCIDRs = cidrs
 	}
 }
