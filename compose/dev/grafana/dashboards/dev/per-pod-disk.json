@@ -1,0 +1,366 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Per-pod disk energy using the Mahadevan-style linear model. Node: P = Wu * L/Lmax + Wi * (Lmax - L)/Lmax (eqn 2.9). Per-pod: P_pod = Wu * L_pod / Lmax (eqn 2.10, idle excluded).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Disk I/O Rates",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Top Pods by Disk Read Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 1 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "lineInterpolation": "linear", "lineWidth": 1,
+            "fillOpacity": 10, "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true, "sortBy": "Mean", "sortDesc": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "topk(10, sum by (namespace, pod) (rate(container_fs_reads_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[$__rate_interval])))",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Top Pods by Disk Write Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 1 },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "lineInterpolation": "linear", "lineWidth": 1,
+            "fillOpacity": 10, "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true, "sortBy": "Mean", "sortDesc": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "topk(10, sum by (namespace, pod) (rate(container_fs_writes_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[$__rate_interval])))",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Node Total Disk I/O (L_D = read + write)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum(rate(node_disk_read_bytes_total[$__rate_interval]))",
+          "legendFormat": "node / read",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum(rate(node_disk_written_bytes_total[$__rate_interval]))",
+          "legendFormat": "node / write",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum(rate(node_disk_read_bytes_total[$__rate_interval])) + sum(rate(node_disk_written_bytes_total[$__rate_interval]))",
+          "legendFormat": "node / total (L_D)",
+          "range": true,
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 101,
+      "panels": [],
+      "title": "Disk Energy (Mahadevan Model)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Node Disk Power (W) --- eqn 2.9: $W_u^D L_D/L_{max} + W_i^D (L_{max}-L_D)/L_{max}$",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 19 },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "$Wu_D * (\n   ( sum(rate(node_disk_read_bytes_total[$__rate_interval]))\n   + sum(rate(node_disk_written_bytes_total[$__rate_interval])) )\n   / $L_MAX\n)\n+ $Wi_D * (\n   ( $L_MAX\n     - sum(rate(node_disk_read_bytes_total[$__rate_interval]))\n     - sum(rate(node_disk_written_bytes_total[$__rate_interval])) )\n   / $L_MAX\n)",
+          "legendFormat": "node disk power",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "$Wu_D * (\n   ( sum(rate(node_disk_read_bytes_total[$__rate_interval]))\n   + sum(rate(node_disk_written_bytes_total[$__rate_interval])) )\n   / $L_MAX\n)",
+          "legendFormat": "active term",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "$Wi_D * (\n   ( $L_MAX\n     - sum(rate(node_disk_read_bytes_total[$__rate_interval]))\n     - sum(rate(node_disk_written_bytes_total[$__rate_interval])) )\n   / $L_MAX\n)",
+          "legendFormat": "idle term",
+          "range": true,
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Per-Pod Disk Power (W) --- eqn 2.10: $W_u^D L_{pod}/L_{max}$",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 19 },
+      "id": 5,
+      "description": "Eqn 2.10: P_pod = Wu * L_pod / L_max. Idle excluded — stays with the node, not distributed to pods. Quiet pods get exactly 0 W.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10,
+            "stacking": { "group": "A", "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true, "sortBy": "Mean", "sortDesc": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "topk(10,\n  $Wu_D *\n  (\n    sum by (namespace, pod) (\n        rate(container_fs_reads_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[$__rate_interval])\n      + rate(container_fs_writes_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[$__rate_interval])\n    )\n    / $L_MAX\n  )\n)",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "title": "Per-Pod Disk Energy (kWh per day, projected from current power)",
+      "type": "bargauge",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 28 },
+      "id": 6,
+      "description": "Eqn 2.10 power averaged over 5m, projected to kWh/day = (W * 24h / 1000)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true
+      },
+      "pluginVersion": "9.1.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "topk(15,\n  $Wu_D *\n  (\n    sum by (namespace, pod) (\n        rate(container_fs_reads_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[5m])\n      + rate(container_fs_writes_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\", pod!=\"\"}[5m])\n    )\n    / $L_MAX\n  )\n  * 24 / 1000\n)",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["disk", "energy", "kepler-extension", "mahadevan"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": { "selected": false, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(container_fs_reads_bytes_total, namespace)",
+        "description": "Namespace filter",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Namespace",
+        "multi": false,
+        "name": "namespace",
+        "options": [],
+        "query": { "query": "label_values(container_fs_reads_bytes_total, namespace)", "refId": "StandardVariableQuery" },
+        "refresh": 1,
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": { "selected": false, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(container_fs_reads_bytes_total{namespace=~\"$namespace\"}, pod)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Pod",
+        "multi": false,
+        "name": "pod",
+        "options": [],
+        "query": { "query": "label_values(container_fs_reads_bytes_total{namespace=~\"$namespace\"}, pod)", "refId": "StandardVariableQuery" },
+        "refresh": 1,
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": { "selected": false, "text": "4", "value": "4" },
+        "description": "W_u^D --- disk active power in watts. NVMe ~4 W, SATA SSD ~3 W, HDD ~6-10 W.",
+        "hide": 0,
+        "label": "Wu_D (W) active",
+        "name": "Wu_D",
+        "options": [ { "selected": true, "text": "4", "value": "4" } ],
+        "query": "4",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": { "selected": false, "text": "1.5", "value": "1.5" },
+        "description": "W_i^D --- disk idle power in watts. NVMe ~1.5 W, SATA SSD ~0.5 W, HDD ~4-6 W.",
+        "hide": 0,
+        "label": "Wi_D (W) idle",
+        "name": "Wi_D",
+        "options": [ { "selected": true, "text": "1.5", "value": "1.5" } ],
+        "query": "1.5",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": { "selected": false, "text": "5e8", "value": "5e8" },
+        "description": "L_max^D --- max disk transfer rate in B/s. NVMe ~5e8 (500 MB/s), SATA SSD ~5.5e8, HDD ~2e8.",
+        "hide": 0,
+        "label": "L_MAX (B/s)",
+        "name": "L_MAX",
+        "options": [ { "selected": true, "text": "5e8", "value": "5e8" } ],
+        "query": "5e8",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Per-Pod Disk Energy (Mahadevan Model)",
+  "uid": "disk-energy-mahadevan",
+  "version": 1,
+  "weekStart": ""
+}
